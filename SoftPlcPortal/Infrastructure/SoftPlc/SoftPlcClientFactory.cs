@@ -6,7 +6,9 @@ public class SoftPlcClientFactory(IHttpClientFactory httpClientFactory)
 
     public SoftPlcClient Create(string baseUrl)
     {
-        var httpClient = _httpClientFactory.CreateClient(baseUrl);
+        var httpClient = _httpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(baseUrl);
+
         return new SoftPlcClient(httpClient);
     }
 }
