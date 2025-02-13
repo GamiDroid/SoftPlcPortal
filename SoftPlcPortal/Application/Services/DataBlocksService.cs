@@ -27,6 +27,17 @@ public class DataBlocksService(
     // Add a new datablock
     public async Task<DataBlock> CreateAsync(DataBlock dataBlock, CancellationToken cancellationToken = default)
     {
+        var config = await _db.PlcConfigs
+            .Where(x => x.Key == dataBlock.PlcConfigKey)
+            .Select(x => new { x.Address, x.ApiPort })
+            .FirstOrDefaultAsync(cancellationToken) ?? 
+            throw new InvalidDataException("dataBlock is not linked to a PLC config");
+
+        var host = $"http://{config.Address}:{config.ApiPort}";
+        var softPlcClient = _softPlcClientFactory.Create(host);
+
+        await softPlcClient.CreateDataBlockAsync(dataBlock.Number, dataBlock.Size, cancellationToken);
+
         dataBlock.Key = Guid.NewGuid();
 
         _db.DataBlocks.Add(dataBlock);
@@ -38,10 +49,21 @@ public class DataBlocksService(
     // update a datablock
     public async Task<DataBlock> UpdateAsync(DataBlock dataBlock, CancellationToken cancellationToken = default)
     {
-        var dto = await _db.DataBlocks.FirstOrDefaultAsync(x => x.Key == dataBlock.Key, cancellationToken);
 
-        if (dto is null)
-            throw new InvalidDataException("Unable to find DataBlock");
+        var config = await _db.PlcConfigs
+            .Where(x => x.Key == dataBlock.PlcConfigKey)
+            .Select(x => new { x.Address, x.ApiPort })
+            .FirstOrDefaultAsync(cancellationToken) ??
+            throw new InvalidDataException("dataBlock is not linked to a PLC config");
+
+        var host = $"http://{config.Address}:{config.ApiPort}";
+        var softPlcClient = _softPlcClientFactory.Create(host);
+
+        await softPlcClient.DeleteDataBlockAsync(dataBlock.Number, cancellationToken);
+        await softPlcClient.CreateDataBlockAsync(dataBlock.Number, dataBlock.Size, cancellationToken);
+
+        var dto = await _db.DataBlocks.FirstOrDefaultAsync(x => x.Key == dataBlock.Key, cancellationToken) 
+            ?? throw new InvalidDataException("Unable to find DataBlock");
 
         dto.Number = dataBlock.Number;
         dto.Name = dataBlock.Name;
