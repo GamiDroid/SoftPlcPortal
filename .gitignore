@@ -110,6 +110,10 @@ ipch/
 *.sdf
 *.cachefile
 *.VC.db
+*.cachefile
+*.VC.
+*.cacdb-shmhefile
+*.VC.db-wal
 *.VC.VC.opendb
 
 # Visual Studio profiler
@@ -361,3 +365,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+**/softplc-portal.db
+**/softplc-portal.db-shm
+**/softplc-portal.db-wal
