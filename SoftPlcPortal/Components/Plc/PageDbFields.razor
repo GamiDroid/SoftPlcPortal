@@ -22,6 +22,7 @@ else
     CommittedItemChanges="@CommittedItemChanges">
         <ToolBarContent>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Add">Add</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RefreshData">Refresh</MudButton>
             <MudSpacer />
             <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
             AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
@@ -44,6 +45,7 @@ else
                     <MudNumericField Label="Bit Offset" @bind-Value="context.Item.BitOffset" />
                 </EditTemplate>
             </PropertyColumn>
+            <PropertyColumn Property="x => x.GetValueAsText(data.Data)" Editable="false" />
             <PropertyColumn Property="x => x.StartValue" Required="false" />
             <PropertyColumn Property="x => x.Comment" Required="false" />
             <TemplateColumn CellClass="d-flex justify-end">
@@ -62,6 +64,7 @@ else
 
     List<DbField> dbFields = null!;
     DataBlock dataBlock = null!;
+    DataBlockData data = new(0, Array.Empty<byte>());
 
     S7Client s7Client = null!;
 
@@ -72,6 +75,7 @@ else
         s7Client = S7ClientFactory.Create("127.0.0.1", 102);
 
         dataBlock = await DataBlocksService.GetByIdAsync(Key) ?? new();
+        data = await DataBlocksService.GetDataAsync(Key);
         dbFields = await DbFieldsService.GetAllAsync(Key);
     }
 
@@ -80,6 +84,11 @@ else
         var item = new DbField() { Name = "" };
         var created = await DbFieldsService.CreateAsync(Key, item);
         dbFields.Add(created);
+    }
+
+    async Task RefreshData()
+    {
+        data = await DataBlocksService.GetDataAsync(Key);
     }
 
     async Task CommittedItemChanges(DbField dbField)
@@ -100,7 +109,6 @@ else
         var dialogRef = await DialogService.ShowAsync<DialogSetDbFieldValue>("Set DB Field Value", parameters, options);
         await dialogRef.Result;
     }
-
 
 
 }

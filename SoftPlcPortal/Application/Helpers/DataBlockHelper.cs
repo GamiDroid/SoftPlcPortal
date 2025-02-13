@@ -54,4 +54,20 @@ public static class S7ClientHelper
 
         return false;
     }
+
+    public static string GetValueAsText(this DbField dbField, byte[] data)
+    {
+        return dbField.DataType switch
+        {
+            DbDataType.Bool => data.GetBitAt(dbField.ByteOffset, dbField.BitOffset).ToString(),
+            DbDataType.Byte => data.GetByteAt(dbField.ByteOffset).ToString(),
+            DbDataType.Int => data.GetIntAt(dbField.ByteOffset).ToString(),
+            DbDataType.UInt => data.GetUIntAt(dbField.ByteOffset).ToString(),
+            DbDataType.DInt => data.GetDIntAt(dbField.ByteOffset).ToString(),
+            DbDataType.Real => data.GetRealAt(dbField.ByteOffset).ToString(),
+            DbDataType.Word => data.GetWordAt(dbField.ByteOffset).ToString(),
+            DbDataType.DWord => data.GetDWordAt(dbField.ByteOffset).ToString(),
+            _ => throw new NotSupportedException("Unsupported db field data type")
+        };
+    }
 }

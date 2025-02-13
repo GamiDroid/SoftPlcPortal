@@ -1,12 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SoftPlcPortal.Infrastructure.Database;
+using SoftPlcPortal.Infrastructure.SoftPlc;
 using SoftPlcPortal.Infrastructure.Tables;
 
 namespace SoftPlcPortal.Application.Services;
 
-public class DataBlocksService(AppDbContext db)
+public class DataBlocksService(
+    AppDbContext db,
+    SoftPlcClientFactory softPlcClientFactory)
 {
     private readonly AppDbContext _db = db;
+    private readonly SoftPlcClientFactory _softPlcClientFactory = softPlcClientFactory;
 
     //get all datablocks of a plcConfigKey
     public Task<List<DataBlock>> GetAllAsync(Guid plcConfigKey, CancellationToken cancellationToken = default)
@@ -47,4 +51,30 @@ public class DataBlocksService(AppDbContext db)
 
         return dto;
     }
+
+    public async Task<DataBlockData> GetDataAsync(Guid key, CancellationToken cancellationToken = default)
+    {
+        var dataBlockConfig = await _db.DataBlocks
+            .Where(x => x.Key == key)
+            .Select(x => new
+            {
+                x.Number,
+                x.PlcConfig!.Address,
+                x.PlcConfig!.ApiPort
+            })
+            .FirstOrDefaultAsync(cancellationToken) ??
+            throw new ArgumentException($"DataBlock with key {key} not found", nameof(key));
+
+        var host = $"http://{dataBlockConfig.Address}:{dataBlockConfig.ApiPort}";
+
+        var softPlcClient = _softPlcClientFactory.Create(host);
+
+        var dataBlockResponse = await softPlcClient.GetDataBlockByIdAsync(dataBlockConfig.Number, cancellationToken);
+
+        var data = Convert.FromBase64String(dataBlockResponse.Data);
+
+        return new DataBlockData(dataBlockResponse.Size, data);
+    }
 }
+
+public record DataBlockData(int Size, byte[] Data);
