@@ -27,11 +27,11 @@ public sealed class SoftPlcClient(HttpClient httpClient)
         response.EnsureSuccessStatusCode();
     }
 
-    public async Task<SoftPlcDataBlockResponse?> GetDataBlockByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<SoftPlcDataBlockResponse> GetDataBlockByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var requestUri = $"/api/DataBlocks/{id}";
         var content = await _httpClient.GetFromJsonAsync<SoftPlcDataBlockResponse>(requestUri, cancellationToken);
-        return content;
+        return content!;
     }
 
     public async Task SetDataBlockAsync(int id, string data, CancellationToken cancellationToken = default)
