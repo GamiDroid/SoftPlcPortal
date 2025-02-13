@@ -44,6 +44,7 @@ public class PlcConfigService(AppDbContext db)
         dto.Name = plcConfig.Name;
         dto.Address = plcConfig.Address;
         dto.PlcPort = plcConfig.PlcPort;
+        dto.ApiPort = plcConfig.ApiPort;
 
         await _db.SaveChangesAsync(cancellationToken);
 
