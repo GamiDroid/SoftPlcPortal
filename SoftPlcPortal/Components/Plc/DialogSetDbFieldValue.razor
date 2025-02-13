@@ -1,0 +1,50 @@
+﻿@using Sharp7
+@using SoftPlcPortal.Application.Helpers
+<MudDialog>
+    <TitleContent>
+        Set DB Field Value
+    </TitleContent>
+    <DialogContent>
+        <MudForm Spacing="2">
+            <MudTextField @bind-Value="DbField.Name" ReadOnly />
+            <MudTextField @bind-Value="DbField.DataType" ReadOnly />
+            <MudTextField Label="Value" @bind-Value="_value" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public DbField DbField { get; set; } = null!;
+    [Parameter] public DataBlock DataBlock { get; set; } = null!;
+    [Parameter] public S7Client S7Client { get; set; } = null!;
+
+    decimal _value;
+
+    void Submit()
+    {
+        SetValue(DbField, _value);
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    void SetValue(DbField dbField, decimal value)
+    {
+        var start = dbField.ByteOffset;
+        var size = DataBlockHelper.GetDataTypeSize(dbField.DataType) / 8;
+
+        if (dbField.DataType == DbDataType.Bool)
+            size = 1;
+
+        byte[] wbuffer = new byte[size];
+        wbuffer.SetValue(dbField.DataType, dbField.BitOffset, value);
+
+        S7Client.DBWrite(DataBlock.Number, start, wbuffer.Length, wbuffer);
+    }
+}

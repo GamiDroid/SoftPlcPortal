@@ -1,0 +1,106 @@
+﻿@page "/plc/{key:guid}/fields"
+@using Sharp7
+@using SoftPlcPortal.Infrastructure.Plc
+@using SoftPlcPortal.Application.Helpers
+
+@inject IDialogService DialogService
+@inject DbFieldsService DbFieldsService
+@inject DataBlocksService DataBlocksService
+@inject S7ClientFactory S7ClientFactory
+
+<PageTitle>PLC DB@(dataBlock.Number) Fields [@dataBlock.Name]</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">PLC DB Fields</MudText>
+
+@if (dbFields == null)
+{
+    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+}
+else
+{
+    <MudDataGrid T="DbField" Items="@dbFields" ReadOnly="false" Filterable="false" SortMode="@SortMode.None" Groupable="false" EditMode="DataGridEditMode.Form"
+    CommittedItemChanges="@CommittedItemChanges">
+        <ToolBarContent>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Add">Add</MudButton>
+            <MudSpacer />
+            <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="x => x.Name" />
+            <PropertyColumn Property="x => x.DataType">
+                <EditTemplate>
+                    <MudSelect @bind-Value="context.Item.DataType" Required Margin="@Margin.Dense">
+                        @foreach (var dataType in Enum.GetValues<DbDataType>())
+                        {
+                            <MudSelectItem Value="dataType">@dataType</MudSelectItem>
+                        }
+                    </MudSelect>
+                </EditTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="@(x => $"{x.ByteOffset}.{x.BitOffset}")" Title="Offset">
+                <EditTemplate>
+                    <MudNumericField Label="Byte Offset" @bind-Value="context.Item.ByteOffset" />
+                    <MudNumericField Label="Bit Offset" @bind-Value="context.Item.BitOffset" />
+                </EditTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="x => x.StartValue" Required="false" />
+            <PropertyColumn Property="x => x.Comment" Required="false" />
+            <TemplateColumn CellClass="d-flex justify-end">
+                <CellTemplate>
+                    <MudButton Size="@Size.Small" OnClick="() => OpenSetValueDialog(context.Item)">Set</MudButton>
+                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+    </MudDataGrid>
+}
+
+@code {
+
+    [Parameter] public Guid Key { get; set; }
+
+    List<DbField> dbFields = null!;
+    DataBlock dataBlock = null!;
+
+    S7Client s7Client = null!;
+
+    string? _searchString;
+
+    protected override async Task OnInitializedAsync()
+    {
+        s7Client = S7ClientFactory.Create("127.0.0.1", 102);
+
+        dataBlock = await DataBlocksService.GetByIdAsync(Key) ?? new();
+        dbFields = await DbFieldsService.GetAllAsync(Key);
+    }
+
+    async Task Add()
+    {
+        var item = new DbField() { Name = "" };
+        var created = await DbFieldsService.CreateAsync(Key, item);
+        dbFields.Add(created);
+    }
+
+    async Task CommittedItemChanges(DbField dbField)
+    {
+        await DbFieldsService.UpdateAsync(dbField);
+    }
+
+    async Task OpenSetValueDialog(DbField dbField)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var parameters = new DialogParameters<DialogSetDbFieldValue>()
+        {
+            { x => x.DbField, dbField },
+            { x => x.DataBlock, dataBlock },
+            { x => x.S7Client, s7Client },
+        };
+
+        var dialogRef = await DialogService.ShowAsync<DialogSetDbFieldValue>("Set DB Field Value", parameters, options);
+        await dialogRef.Result;
+    }
+
+
+
+}

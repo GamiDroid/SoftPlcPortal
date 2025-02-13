@@ -1,0 +1,41 @@
+﻿<MudDialog>
+    <TitleContent>
+        PLC Config Form
+    </TitleContent>
+    <DialogContent>
+        <MudForm Spacing="2">
+            <MudTextField For="@(() => Model.Key)" @bind-Value="Model.Key" ReadOnly />
+            <MudTextField For="@(() => Model.Name)" Label="Name" @bind-Value="Model.Name" />
+            <MudTextField For="@(() => Model.Address)" Label="Address" @bind-Value="Model.Address" />
+            <MudNumericField For="@(() => Model.PlcPort)" Label="PLC Port" @bind-Value="Model.PlcPort" />
+            <MudNumericField For="@(() => Model.ApiPort)" Label="API Port" @bind-Value="Model.ApiPort" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public PlcConfig Model { get; set; } = null!;
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(Model));
+
+    private void Cancel() => MudDialog.Cancel();
+
+    public static async Task<DialogResult?> OpenAsync(IDialogService dialogService, PlcConfig model)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var parameters = new DialogParameters<FormDialogPlc>()
+        {
+            { x => x.Model, model }
+        };
+
+        var dialogRef = await dialogService.ShowAsync<FormDialogPlc>("PLC Config Form", parameters, options);
+        return await dialogRef.Result;
+    }
+}

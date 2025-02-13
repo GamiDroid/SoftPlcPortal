@@ -1,0 +1,81 @@
+﻿@page "/plc/{key:guid}"
+
+@inject DataBlocksService DataBlocksService
+@inject IDialogService DialogService
+
+<PageTitle>PLC Config</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">PLC Config</MudText>
+<MudText Typo="Typo.body1" Class="mb-8">This component demonstrates fetching data from the server.</MudText>
+
+@if (dataBlocks == null)
+{
+    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+}
+else
+{
+    <MudDataGrid Items="@dataBlocks" Filterable="false" SortMode="@SortMode.None" Groupable="false">
+        <ToolBarContent>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Create">Create</MudButton>
+            <MudSpacer />
+            <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="x => x.Number" />
+            <PropertyColumn Property="x => x.Name" />
+            <TemplateColumn CellClass="d-flex justify-end">
+                <CellTemplate>
+                    <MudStack Row>
+                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" Href="@($"/plc/{context.Item.Key}/fields")">Open</MudButton>
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+    </MudDataGrid>
+}
+
+@code {
+
+    [Parameter] public Guid Key { get; set; }
+
+    List<DataBlock>? dataBlocks;
+    string? _searchString;
+
+    protected override async Task OnInitializedAsync()
+    {
+        dataBlocks = await DataBlocksService.GetAllAsync(Key);
+    }
+
+    private async Task Create()
+    {
+        var model = new DataBlock
+            {
+                PlcConfigKey = Key
+            };
+
+        var dialogResult = await FormDialogDataBlock.OpenAsync(DialogService, model);
+        if (dialogResult is null || dialogResult.Canceled)
+            return;
+
+        var added = await DataBlocksService.CreateAsync(model);
+        dataBlocks = await DataBlocksService.GetAllAsync(Key);
+    }
+
+    private async Task Edit(DataBlock dataBlock)
+    {
+        var model = new DataBlock
+            {
+                Key = dataBlock.Key,
+                Name = dataBlock.Name,
+            };
+
+        var dialogResult = await FormDialogDataBlock.OpenAsync(DialogService, model);
+        if (dialogResult is null || dialogResult.Canceled)
+            return;
+
+        var updated = await DataBlocksService.UpdateAsync(model);
+        dataBlocks = await DataBlocksService.GetAllAsync(Key);
+    }
+
+}

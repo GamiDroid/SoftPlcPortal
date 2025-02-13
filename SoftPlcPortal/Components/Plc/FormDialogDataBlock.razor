@@ -1,0 +1,39 @@
+﻿<MudDialog>
+    <TitleContent>
+        DataBlock Form
+    </TitleContent>
+    <DialogContent>
+        <MudForm Spacing="2">
+            <MudTextField For="@(() => Model.Key)" @bind-Value="Model.Key" ReadOnly />
+            <MudTextField For="@(() => Model.Number)" Label="Number" @bind-Value="Model.Number" />
+            <MudTextField For="@(() => Model.Name)" Label="Name" @bind-Value="Model.Name" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+    [CascadingParameter] private MudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public DataBlock Model { get; set; } = null!;
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(Model));
+
+    private void Cancel() => MudDialog.Cancel();
+
+    public static async Task<DialogResult?> OpenAsync(IDialogService dialogService, DataBlock model)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var parameters = new DialogParameters<FormDialogDataBlock>()
+        {
+            { x => x.Model, model }
+        };
+
+        var dialogRef = await dialogService.ShowAsync<FormDialogDataBlock>("PLC DataBlock", parameters, options);
+        return await dialogRef.Result;
+    }
+}

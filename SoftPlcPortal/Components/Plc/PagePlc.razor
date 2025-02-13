@@ -1,0 +1,85 @@
+﻿@page "/plc"
+
+@inject PlcConfigService PlcConfigService
+@inject IDialogService DialogService
+
+<PageTitle>PLC Config</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">PLC Config</MudText>
+<MudText Typo="Typo.body1" Class="mb-8">This component demonstrates fetching data from the server.</MudText>
+
+@if (plcConfigs == null)
+{
+    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+}
+else
+{
+    <MudDataGrid Items="@plcConfigs" Filterable="false" SortMode="@SortMode.None" Groupable="false">
+        <ToolBarContent>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Create">Create</MudButton>
+            <MudSpacer />
+            <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="x => x.Name" />
+            <PropertyColumn Property="x => x.Address" />
+            <PropertyColumn Property="x => x.PlcPort" Title="PLC Port" />
+            <PropertyColumn Property="x => x.ApiPort" Title="API Port" />
+            <TemplateColumn CellClass="d-flex justify-end">
+                <CellTemplate>
+                    <MudStack Row>
+                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" OnClick="() => Edit(context.Item)">Edit</MudButton>
+                        <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" Href="@($"/plc/{context.Item.Key}")">Open</MudButton>
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+    </MudDataGrid>
+}
+
+@code {
+    private List<PlcConfig>? plcConfigs;
+    private string? _searchString;
+
+    protected override async Task OnInitializedAsync()
+    {
+        plcConfigs =  await PlcConfigService.GetAllAsync();
+    }
+
+    private async Task Create()
+    {
+        var model = new PlcConfig
+        {
+            Address = "127.0.0.1",
+            PlcPort = 102,
+            ApiPort = 8080
+        };
+
+        var dialogResult = await FormDialogPlc.OpenAsync(DialogService, model);
+        if (dialogResult is null || dialogResult.Canceled)
+            return;
+
+        var added =  await PlcConfigService.CreateAsync(model);
+        plcConfigs = await PlcConfigService.GetAllAsync();
+    }
+
+    private async Task Edit(PlcConfig plcConfig)
+    {
+        var model = new PlcConfig
+        {
+            Key = plcConfig.Key,
+            Name = plcConfig.Name,
+            Address = plcConfig.Address,
+            PlcPort = plcConfig.PlcPort,
+            ApiPort = plcConfig.ApiPort,
+        };
+
+        var dialogResult = await FormDialogPlc.OpenAsync(DialogService, model);
+        if (dialogResult is null || dialogResult.Canceled)
+            return;
+
+        var updated = await PlcConfigService.UpdateAsync(model);
+        plcConfigs = await PlcConfigService.GetAllAsync();
+    }
+}
