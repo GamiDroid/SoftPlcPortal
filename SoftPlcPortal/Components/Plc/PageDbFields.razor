@@ -3,10 +3,12 @@
 @using SoftPlcPortal.Infrastructure.Plc
 @using SoftPlcPortal.Application.Helpers
 
+@inject IJSRuntime JS
 @inject IDialogService DialogService
 @inject DbFieldsService DbFieldsService
 @inject DataBlocksService DataBlocksService
 @inject S7ClientFactory S7ClientFactory
+@inject IWebHostEnvironment Environment
 
 <PageTitle>PLC DB@(dataBlock.Number) Fields [@dataBlock.Name]</PageTitle>
 
@@ -23,6 +25,12 @@ else
         <ToolBarContent>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Add">Add</MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RefreshData">Refresh</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExportDbFields">Export</MudButton>
+            <MudFileUpload T="IBrowserFile" FilesChanged="ImportDbFields">
+                <ActivatorContent>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary">Import</MudButton>
+                </ActivatorContent>
+            </MudFileUpload>
             <MudSpacer />
             <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
             AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
@@ -110,5 +118,44 @@ else
         await dialogRef.Result;
     }
 
+    private async Task ExportDbFields()
+    {
+        var exportBinaryData = await DbFieldsService.ExportDbFieldsToExcelAsync(Key);
+        var fileStream = new MemoryStream(exportBinaryData);
 
+        var fileName = "dbFields.xlsx";
+
+        using var streamRef = new DotNetStreamReference(stream: fileStream);
+        await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+    }
+
+    async Task ImportDbFields(IBrowserFile browserFile)
+    {
+        try 
+        {
+            var trustedFileName = Path.GetRandomFileName();
+            var importFolderPath = Path.Combine(Environment.ContentRootPath, Environment.EnvironmentName, "imports");
+
+            if (!Directory.Exists(importFolderPath))
+                Directory.CreateDirectory(importFolderPath);
+
+            var path = Path.Combine(Environment.ContentRootPath,
+                Environment.EnvironmentName, "imports",
+                trustedFileName);
+
+            await using (FileStream fs = new(path, FileMode.Create))
+            {
+                await browserFile.OpenReadStream().CopyToAsync(fs);
+            }
+
+            await DbFieldsService.ImportDbFieldsFromExcelAsync(Key, path);
+
+            dbFields = await DbFieldsService.GetAllAsync(Key);
+            await RefreshData();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
 }

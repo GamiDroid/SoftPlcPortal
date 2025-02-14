@@ -1,17 +1,16 @@
 ﻿using Sharp7;
 using SoftPlcPortal.Infrastructure.Tables;
-using static MudBlazor.CategoryTypes;
 
 namespace SoftPlcPortal.Application.Helpers;
 
 public class DataBlockHelper
 {
-    public static int GetDataTypeSize(DbDataType dataType)
+    public static int GetDataTypeBitSize(DbDataType dataType)
     {
         return dataType switch
         {
             DbDataType.Bool => 1,
-            
+
             DbDataType.Byte => 8,
 
             DbDataType.Int => 16,
@@ -25,13 +24,33 @@ public class DataBlockHelper
             _ => throw new ArgumentException("Datatype has no known size defined", nameof(dataType))
         };
     }
+
+    public static int GetDataTypeMinimumByteSize(DbDataType dataType)
+    {
+        return dataType switch
+        {
+            DbDataType.Bool => 1,
+
+            DbDataType.Byte => 1,
+
+            DbDataType.Int => 2,
+            DbDataType.UInt => 2,
+            DbDataType.Word => 2,
+
+            DbDataType.DInt => 4,
+            DbDataType.DWord => 4,
+            DbDataType.Real => 4,
+
+            _ => throw new ArgumentException("Datatype has no known size defined", nameof(dataType))
+        };
+    }
 }
 
 public static class S7ClientHelper
 {
     public static void SetValue(this byte[] buffer, DbDataType dataType, int offset, object value)
     {
-        switch(dataType)
+        switch (dataType)
         {
             case DbDataType.Bool: buffer.SetBitAt(0, offset, ConvertToBool(value)); break;
             case DbDataType.Byte: buffer.SetByteAt(offset, Convert.ToByte(value)); break;
@@ -57,6 +76,11 @@ public static class S7ClientHelper
 
     public static string GetValueAsText(this DbField dbField, byte[] data)
     {
+
+
+        if (data.Length < dbField.ByteOffset + 1 + DataBlockHelper.GetDataTypeMinimumByteSize(dbField.DataType) || dbField.ByteOffset < 0)
+            return "<OUT_OF_RANGE>";
+
         return dbField.DataType switch
         {
             DbDataType.Bool => data.GetBitAt(dbField.ByteOffset, dbField.BitOffset).ToString(),

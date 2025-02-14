@@ -37,7 +37,7 @@
     void SetValue(DbField dbField, decimal value)
     {
         var start = dbField.ByteOffset;
-        var size = DataBlockHelper.GetDataTypeSize(dbField.DataType) / 8;
+        var size = DataBlockHelper.GetDataTypeBitSize(dbField.DataType) / 8;
 
         if (dbField.DataType == DbDataType.Bool)
             size = 1;
