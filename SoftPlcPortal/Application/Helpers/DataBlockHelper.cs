@@ -76,8 +76,6 @@ public static class S7ClientHelper
 
     public static string GetValueAsText(this DbField dbField, byte[] data)
     {
-
-
         if (data.Length < dbField.ByteOffset + 1 + DataBlockHelper.GetDataTypeMinimumByteSize(dbField.DataType) || dbField.ByteOffset < 0)
             return "<OUT_OF_RANGE>";
 
