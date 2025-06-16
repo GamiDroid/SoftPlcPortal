@@ -24,7 +24,7 @@ else
     CommittedItemChanges="@CommittedItemChanges">
         <ToolBarContent>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Add">Add</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RefreshData">Refresh</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RefreshDataAsync">Refresh</MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExportDbFields">Export</MudButton>
             <MudFileUpload T="IBrowserFile" FilesChanged="ImportDbFields">
                 <ActivatorContent>
@@ -59,6 +59,7 @@ else
             <TemplateColumn CellClass="d-flex justify-end">
                 <CellTemplate>
                     <MudButton Size="@Size.Small" OnClick="() => OpenSetValueDialog(context.Item)">Set</MudButton>
+                    <MudIconButton Size="@Size.Small" OnClick="() => DeleteDbFieldAsync(context.Item)" Icon="@Icons.Material.Outlined.Delete"></MudIconButton>
                     <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
                 </CellTemplate>
             </TemplateColumn>
@@ -78,6 +79,13 @@ else
 
     string? _searchString;
 
+    async Task DeleteDbFieldAsync(DbField dbField)
+    {
+        await DbFieldsService.DeleteAsync(dbField);
+        dbFields.Remove(dbField);
+        await RefreshDataAsync();
+    }
+
     protected override async Task OnInitializedAsync()
     {
         s7Client = S7ClientFactory.Create("127.0.0.1", 102);
@@ -92,9 +100,10 @@ else
         var item = new DbField() { Name = "" };
         var created = await DbFieldsService.CreateAsync(Key, item);
         dbFields.Add(created);
+        await RefreshDataAsync();
     }
 
-    async Task RefreshData()
+    async Task RefreshDataAsync()
     {
         data = await DataBlocksService.GetDataAsync(Key);
     }
@@ -112,6 +121,7 @@ else
             { x => x.DbField, dbField },
             { x => x.DataBlock, dataBlock },
             { x => x.S7Client, s7Client },
+            { x => x.OnChangesSet, EventCallback.Factory.Create(this, RefreshDataAsync) }
         };
 
         var dialogRef = await DialogService.ShowAsync<DialogSetDbFieldValue>("Set DB Field Value", parameters, options);
@@ -151,7 +161,7 @@ else
             await DbFieldsService.ImportDbFieldsFromExcelAsync(Key, path);
 
             dbFields = await DbFieldsService.GetAllAsync(Key);
-            await RefreshData();
+            await RefreshDataAsync();
         }
         catch (Exception ex)
         {

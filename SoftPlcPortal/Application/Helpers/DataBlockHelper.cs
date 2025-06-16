@@ -1,4 +1,5 @@
-﻿using Sharp7;
+﻿using DocumentFormat.OpenXml.Drawing;
+using Sharp7;
 using SoftPlcPortal.Infrastructure.Tables;
 
 namespace SoftPlcPortal.Application.Helpers;
@@ -14,13 +15,13 @@ public class DataBlockHelper
             DbDataType.Byte => 8,
 
             DbDataType.Int => 16,
-            DbDataType.UInt => 16,
-            DbDataType.Word => 16,
 
             DbDataType.DInt => 32,
-            DbDataType.DWord => 32,
+            //DbDataType.String => 32,
             DbDataType.Real => 32,
 
+            DbDataType.LReal => 64,
+            DbDataType.LInt => 64,
             _ => throw new ArgumentException("Datatype has no known size defined", nameof(dataType))
         };
     }
@@ -34,13 +35,13 @@ public class DataBlockHelper
             DbDataType.Byte => 1,
 
             DbDataType.Int => 2,
-            DbDataType.UInt => 2,
-            DbDataType.Word => 2,
 
             DbDataType.DInt => 4,
-            DbDataType.DWord => 4,
+            //DbDataType.String => 4,
             DbDataType.Real => 4,
 
+            DbDataType.LReal => 8,
+            DbDataType.LInt => 8,
             _ => throw new ArgumentException("Datatype has no known size defined", nameof(dataType))
         };
     }
@@ -52,14 +53,58 @@ public static class S7ClientHelper
     {
         switch (dataType)
         {
-            case DbDataType.Bool: buffer.SetBitAt(0, offset, ConvertToBool(value)); break;
-            case DbDataType.Byte: buffer.SetByteAt(offset, Convert.ToByte(value)); break;
-            case DbDataType.Int: buffer.SetIntAt(offset, Convert.ToInt16(value)); break;
-            case DbDataType.UInt: buffer.SetUIntAt(offset, Convert.ToUInt16(value)); break;
-            case DbDataType.DInt: buffer.SetDIntAt(offset, Convert.ToInt32(value)); break;
-            case DbDataType.Real: buffer.SetRealAt(offset, Convert.ToSingle(value)); break;
-            case DbDataType.Word: buffer.SetWordAt(offset, Convert.ToUInt16(value)); break;
-            case DbDataType.DWord: buffer.SetDWordAt(offset, Convert.ToUInt32(value)); break;
+            case DbDataType.Bool:
+                buffer.SetBitAt(0, offset, ConvertToBool(value));
+                break;
+
+            case DbDataType.Byte:
+                if (value is byte b)
+                    buffer.SetByteAt(offset, b);
+                else
+                    throw new ArgumentException("Value must be of type byte for DbDataType.Byte", nameof(value));
+                break;
+
+            case DbDataType.Int:
+                if (value is short s)
+                    buffer.SetIntAt(offset, s);
+                else
+                    throw new ArgumentException("Value must be of type short for DbDataType.Int", nameof(value));
+                break;
+
+            case DbDataType.DInt:
+                if (value is int i)
+                    buffer.SetDIntAt(offset, i);
+                else
+                    throw new ArgumentException("Value must be of type int for DbDataType.DInt", nameof(value));
+                break;
+
+            case DbDataType.LInt:
+                if (value is long l)
+                    buffer.SetLIntAt(offset, l);
+                else
+                    throw new ArgumentException("Value must be of type long for DbDataType.LInt", nameof(value));
+                break;
+
+            case DbDataType.Real:
+                if (value is float f)
+                    buffer.SetRealAt(offset, f);
+                else
+                    throw new ArgumentException("Value must be of type float for DbDataType.Real", nameof(value));
+                break;
+
+            case DbDataType.LReal:
+                if (value is double d)
+                    buffer.SetLRealAt(offset, d);
+                else
+                    throw new ArgumentException("Value must be of type double for DbDataType.LReal", nameof(value));
+                break;
+
+                //case DbDataType.String:
+                //    if (value is string str)
+                //        buffer.SetStringAt(offset, MaxLen: buffer.Length, str);
+                //    else
+                //        throw new ArgumentException("Value must be of type string for DbDataType.String", nameof(value));
+                //    break;
         }
     }
 
@@ -84,11 +129,11 @@ public static class S7ClientHelper
             DbDataType.Bool => data.GetBitAt(dbField.ByteOffset, dbField.BitOffset).ToString(),
             DbDataType.Byte => data.GetByteAt(dbField.ByteOffset).ToString(),
             DbDataType.Int => data.GetIntAt(dbField.ByteOffset).ToString(),
-            DbDataType.UInt => data.GetUIntAt(dbField.ByteOffset).ToString(),
             DbDataType.DInt => data.GetDIntAt(dbField.ByteOffset).ToString(),
+            DbDataType.LInt => data.GetLIntAt(dbField.ByteOffset).ToString(),
             DbDataType.Real => data.GetRealAt(dbField.ByteOffset).ToString(),
-            DbDataType.Word => data.GetWordAt(dbField.ByteOffset).ToString(),
-            DbDataType.DWord => data.GetDWordAt(dbField.ByteOffset).ToString(),
+            DbDataType.LReal => data.GetLRealAt(dbField.ByteOffset).ToString(),
+            //DbDataType.String => data.GetStringAt(dbField.ByteOffset).ToString(),
             _ => throw new NotSupportedException("Unsupported db field data type")
         };
     }
