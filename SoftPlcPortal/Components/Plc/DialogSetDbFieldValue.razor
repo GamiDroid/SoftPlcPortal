@@ -34,13 +34,26 @@
 
     private void Cancel() => MudDialog.Cancel();
 
-    void SetValue(DbField dbField, decimal value)
+    void SetValue(DbField dbField)
     {
         var start = dbField.ByteOffset;
         var size = DataBlockHelper.GetDataTypeBitSize(dbField.DataType) / 8;
 
         if (dbField.DataType == DbDataType.Bool)
             size = 1;
+
+        object value = dbField.DataType switch
+        {
+            DbDataType.Bool => Convert.ToBoolean(_value) ? 1 : 0,
+            DbDataType.Byte => Convert.ToByte(_value),
+            DbDataType.Int => Convert.ToInt16(_value),
+            DbDataType.DInt => Convert.ToInt32(_value),
+            DbDataType.LInt => Convert.ToInt64(_value),
+            DbDataType.Real => float.Parse(_value!, CultureInfo.InvariantCulture),
+            DbDataType.LReal => double.Parse(_value!, CultureInfo.InvariantCulture),
+            // DbDataType.String => Encoding.ASCII.GetBytes(Convert.ToString(_value)),
+            _ => throw new NotSupportedException($"Unsupported data type: {dbField.DataType}")
+        };
 
         byte[] wbuffer = new byte[size];
         wbuffer.SetValue(dbField.DataType, dbField.BitOffset, value);

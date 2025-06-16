@@ -19,13 +19,11 @@ public record DbField
 public enum DbDataType
 {
     Bool,
-
     Byte,
     Int,
-    UInt,
     DInt,
-    Word,
-    DWord,
-
+    LInt,
     Real,
+    LReal,
+    //String,
 }
