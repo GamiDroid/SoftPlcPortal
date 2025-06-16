@@ -59,6 +59,7 @@ else
             <TemplateColumn CellClass="d-flex justify-end">
                 <CellTemplate>
                     <MudButton Size="@Size.Small" OnClick="() => OpenSetValueDialog(context.Item)">Set</MudButton>
+                    <MudIconButton Size="@Size.Small" OnClick="() => DeleteDbFieldAsync(context.Item)" Icon="@Icons.Material.Outlined.Delete"></MudIconButton>
                     <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
                 </CellTemplate>
             </TemplateColumn>
@@ -77,6 +78,13 @@ else
     S7Client s7Client = null!;
 
     string? _searchString;
+
+    async Task DeleteDbFieldAsync(DbField dbField)
+    {
+        await DbFieldsService.DeleteAsync(dbField);
+        dbFields.Remove(dbField);
+        await RefreshDataAsync();
+    }
 
     protected override async Task OnInitializedAsync()
     {

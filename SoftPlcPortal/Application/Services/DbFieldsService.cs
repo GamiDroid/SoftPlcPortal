@@ -21,6 +21,14 @@ public class DbFieldsService(
             .ToListAsync(cancellationToken);
     }
 
+    public async Task DeleteAsync(DbField dbField)
+    {
+        var existingDbField = await _db.DbFields.FirstOrDefaultAsync(x => x.Key == dbField.Key) 
+            ?? throw new InvalidOperationException("DbField not found");
+        _db.DbFields.Remove(existingDbField);
+        await _db.SaveChangesAsync();
+    }
+
     public async Task<DbField> CreateAsync(Guid dataBlockKey, DbField dbField)
     {
         dbField.Key = Guid.NewGuid();
