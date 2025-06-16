@@ -58,52 +58,31 @@ public static class S7ClientHelper
                 break;
 
             case DbDataType.Byte:
-                if (value is byte b)
-                    buffer.SetByteAt(offset, b);
-                else
-                    throw new ArgumentException("Value must be of type byte for DbDataType.Byte", nameof(value));
+                buffer.SetByteAt(offset, value is byte b ? b : Convert.ToByte(value));
                 break;
 
             case DbDataType.Int:
-                if (value is short s)
-                    buffer.SetIntAt(offset, s);
-                else
-                    throw new ArgumentException("Value must be of type short for DbDataType.Int", nameof(value));
+                buffer.SetIntAt(offset, value is short s ? s : Convert.ToInt16(value));
                 break;
 
             case DbDataType.DInt:
-                if (value is int i)
-                    buffer.SetDIntAt(offset, i);
-                else
-                    throw new ArgumentException("Value must be of type int for DbDataType.DInt", nameof(value));
+                buffer.SetDIntAt(offset, value is int i ? i : Convert.ToInt32(value));
                 break;
 
             case DbDataType.LInt:
-                if (value is long l)
-                    buffer.SetLIntAt(offset, l);
-                else
-                    throw new ArgumentException("Value must be of type long for DbDataType.LInt", nameof(value));
+                buffer.SetLIntAt(offset, value is long l ? l : Convert.ToInt64(value));
                 break;
 
             case DbDataType.Real:
-                if (value is float f)
-                    buffer.SetRealAt(offset, f);
-                else
-                    throw new ArgumentException("Value must be of type float for DbDataType.Real", nameof(value));
+                buffer.SetRealAt(offset, value is float f ? f : Convert.ToSingle(value));
                 break;
 
             case DbDataType.LReal:
-                if (value is double d)
-                    buffer.SetLRealAt(offset, d);
-                else
-                    throw new ArgumentException("Value must be of type double for DbDataType.LReal", nameof(value));
+                buffer.SetLRealAt(offset, value is double d ? d : Convert.ToDouble(value));
                 break;
 
                 //case DbDataType.String:
-                //    if (value is string str)
-                //        buffer.SetStringAt(offset, MaxLen: buffer.Length, str);
-                //    else
-                //        throw new ArgumentException("Value must be of type string for DbDataType.String", nameof(value));
+                //    buffer.SetStringAt(offset, MaxLen: buffer.Length, value is string str ? str : Convert.ToString(value));
                 //    break;
         }
     }
