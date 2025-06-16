@@ -1,5 +1,7 @@
 ﻿@using Sharp7
 @using SoftPlcPortal.Application.Helpers
+@using System.Text
+@using System.Globalization
 <MudDialog>
     <TitleContent>
         Set DB Field Value
@@ -13,7 +15,7 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
+        <MudButton Color="Color.Primary" OnClick="SubmitAsync">Ok</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -23,12 +25,14 @@
     [Parameter] public DbField DbField { get; set; } = null!;
     [Parameter] public DataBlock DataBlock { get; set; } = null!;
     [Parameter] public S7Client S7Client { get; set; } = null!;
+    [Parameter, EditorRequired] public EventCallback OnChangesSet { get; set; }
 
-    decimal _value;
+    string? _value;
 
-    void Submit()
+    async Task SubmitAsync()
     {
-        SetValue(DbField, _value);
+        SetValue(DbField);
+        await OnChangesSet.InvokeAsync();
         MudDialog.Close(DialogResult.Ok(true));
     }
 
