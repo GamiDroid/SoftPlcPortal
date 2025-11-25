@@ -24,10 +24,13 @@ else
         <Columns>
             <PropertyColumn Property="x => x.Number" />
             <PropertyColumn Property="x => x.Name" />
+            <PropertyColumn Property="x => x.Size" />
             <TemplateColumn CellClass="d-flex justify-end">
                 <CellTemplate>
                     <MudStack Row>
                         <MudButton Size="@Size.Small" Variant="@Variant.Filled" Color="@Color.Primary" Href="@($"/plc/{context.Item.Key}/fields")">Open</MudButton>
+                        <MudIconButton Size="@Size.Small" OnClick="() => Delete(context.Item)" Icon="@Icons.Material.Outlined.Delete"></MudIconButton>
+                        <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" OnClick="() => Edit(context.Item)" />
                     </MudStack>
                 </CellTemplate>
             </TemplateColumn>
@@ -66,8 +69,12 @@ else
     {
         var model = new DataBlock
             {
+                PlcConfigKey = dataBlock.PlcConfigKey,
                 Key = dataBlock.Key,
                 Name = dataBlock.Name,
+                Size = dataBlock.Size,
+                Number = dataBlock.Number,
+                Description = dataBlock.Description
             };
 
         var dialogResult = await FormDialogDataBlock.OpenAsync(DialogService, model);
@@ -78,4 +85,9 @@ else
         dataBlocks = await DataBlocksService.GetAllAsync(Key);
     }
 
+    private async Task Delete(DataBlock dataBlock)
+    {
+        var db = await DataBlocksService.DeleteAsync(dataBlock);
+        dataBlocks?.Remove(db);
+    }
 }

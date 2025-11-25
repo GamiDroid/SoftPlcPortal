@@ -1,5 +1,56 @@
-﻿
+﻿@inject PlcConfigService PlcConfigService
+@inject DataBlocksService DataBlocksService
+
 <MudNavMenu>
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-    <MudNavLink Href="plc" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">PLC</MudNavLink>
+    
+    <MudNavGroup Title="PLC" Icon="@Icons.Material.Filled.List" Expanded="true">
+        <MudNavLink Href="plc" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Settings">PLC Configuration</MudNavLink>
+        @if (plcConfigs == null)
+        {
+            <MudProgressCircular Size="Size.Small" Color="Color.Default" Indeterminate="true" />
+        }
+        else
+        {
+            @foreach (var plc in plcConfigs)
+            {
+                <MudNavGroup Title="@plc.Name" tooltip="@plc.Name" Icon="@Icons.Material.Filled.Memory" Expanded="false">
+                    <MudNavLink Href="@($"plc/{plc.Key}")" Match="NavLinkMatch.All">Overview</MudNavLink>
+                    
+                    @if (dataBlocksDict.TryGetValue(plc.Key, out var dataBlocks) && dataBlocks.Any())
+                    {
+                        <MudNavGroup Title="Databases" Icon="@Icons.Material.Filled.Storage" Expanded="false">
+                            @foreach (var db in dataBlocks)
+                            {
+                                <MudNavLink Href="@($"plc/{db.Key}/fields")" Match="NavLinkMatch.All">
+                                    DB@(db.Number) - @db.Name
+                                </MudNavLink>
+                            }
+                        </MudNavGroup>
+                    }
+                </MudNavGroup>
+            }
+        }
+    </MudNavGroup>
 </MudNavMenu>
+
+@code {
+    private List<PlcConfig>? plcConfigs;
+    private Dictionary<Guid, List<DataBlock>> dataBlocksDict = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        // Get all PLC configurations
+        plcConfigs = await PlcConfigService.GetAllAsync();
+        
+        // For each PLC configuration, get its data blocks
+        if (plcConfigs != null)
+        {
+            foreach (var plc in plcConfigs)
+            {
+                var dataBlocks = await DataBlocksService.GetAllAsync(plc.Key);
+                dataBlocksDict[plc.Key] = dataBlocks;
+            }
+        }
+    }
+}

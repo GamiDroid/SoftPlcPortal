@@ -20,13 +20,14 @@
 }
 else
 {
-    <MudDataGrid T="DbField" Items="@dbFields" ReadOnly="false" Filterable="false" SortMode="@SortMode.None" Groupable="false" EditMode="DataGridEditMode.Form"
-    CommittedItemChanges="@CommittedItemChanges">
+    <MudDataGrid T="DbField" Items="@dbFields" 
+        ReadOnly="false" Filterable="false" SortMode="@SortMode.None" 
+        Groupable="false" EditMode="DataGridEditMode.Form" CommittedItemChanges="@CommittedItemChanges">
         <ToolBarContent>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Add">Add</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RefreshDataAsync">Refresh</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExportDbFields">Export</MudButton>
-            <MudFileUpload T="IBrowserFile" FilesChanged="ImportDbFields">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Add" Class="mr-2">Add</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RefreshDataAsync" Class="mr-2">Refresh</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExportDbFields" Class="mr-2">Export</MudButton>
+            <MudFileUpload T="IBrowserFile" FilesChanged="ImportDbFields" Class="d-inline-block">
                 <ActivatorContent>
                     <MudButton Variant="Variant.Filled" Color="Color.Primary">Import</MudButton>
                 </ActivatorContent>
